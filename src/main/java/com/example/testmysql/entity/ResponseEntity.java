@@ -18,6 +18,11 @@ public class ResponseEntity extends HashMap<String,Object> {
 		return this;
 	}
 
+	public ResponseEntity data(Object object){
+		this.put("data",object);
+		return this;
+	}
+
 	public ResponseEntity code(String code){
 		this.put("code",code);
 		return this;

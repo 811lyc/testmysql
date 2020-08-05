@@ -17,9 +17,9 @@ public class JwtConstants {
      */
     public static final String AES_KEY = "e6GCUzU9ACprlvNA";
 
-    public static final String API_JWT_ACCESS_TOKEN = "API:JWT:ACCESS_TOKEN:";
-    public static final String API_JWT_REFRESH_TOKEN = "API:JWT:REFRESH_TOKEN:";
-    public static final String API_JWT_AES = "API:JWT:AES:";
+    public static final String JWT_ACCESS_TOKEN = "JWT:ACCESS_TOKEN:";
+    public static final String JWT_REFRESH_TOKEN = "JWT:REFRESH_TOKEN:";
+    public static final String JWT_AES = "JWT:AES:";
 
 
 }

@@ -1,12 +1,16 @@
 package com.example.testmysql.controller;
 
 import cn.hutool.core.date.DateTime;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.testmysql.contants.CommonContants;
+import com.example.testmysql.contants.JwtConstants;
+import com.example.testmysql.contants.TimeConstants;
 import com.example.testmysql.entity.ResponseEntity;
 import com.example.testmysql.entity.ResultEnum;
 import com.example.testmysql.entity.vo.User;
+import com.example.testmysql.service.RedisService;
 import com.example.testmysql.service.UserService;
 import com.example.testmysql.untils.AesUtils;
 import com.example.testmysql.untils.JwtUtils;
@@ -31,6 +35,8 @@ import java.util.UUID;
 public class LoginController {
 
 	private final UserService userService;
+
+	private final RedisService redisService;
 
 	/**
 	 * 注册
@@ -68,10 +74,24 @@ public class LoginController {
 		}
 		//密码aes 加密密码
 		String password = AesUtils.encodeHex(CommonContants.JIA_MI, user.getPassword());
+		String accessToken = "";
+		String refreshToken = "";
 		if(password.equals(one.getPassword())){
 			//先对比 redis是否有数据，有就重新生成token踢掉前面的token
-			String token = JwtUtils.createToken(UUID.randomUUID().toString(), user.toString(), System.currentTimeMillis());
-			return new ResponseEntity().message(token);
+			if(redisService.hasKey(JwtConstants.JWT_ACCESS_TOKEN+user.getUsername())){
+				redisService.del(JwtConstants.JWT_ACCESS_TOKEN+user.getUsername());
+			}else {
+				accessToken = JwtUtils.createToken(UUID.randomUUID().toString(), user.toString(), TimeConstants.SIXTY_MINUTE_MS);
+				//刷新token  五分钟时间
+				refreshToken = JwtUtils.createToken(UUID.randomUUID().toString(), user.toString(), TimeConstants.FIVE_MINUTE_MS+TimeConstants.SIXTY_MINUTE_MS);
+				redisService.set(JwtConstants.JWT_ACCESS_TOKEN+user.getUsername(),accessToken,TimeConstants.SIXTY_MINUTE_MS);
+				redisService.set(JwtConstants.JWT_REFRESH_TOKEN+user.getUsername(),refreshToken,TimeConstants.SIXTY_MINUTE_MS+TimeConstants.FIVE_MINUTE_MS);
+			}
+			return new ResponseEntity().data(MapUtil.builder()
+					.put("accessToken",accessToken)
+					.put("refreshToken",refreshToken)
+					.put("expireTime",TimeConstants.SIXTY_MINUTE_MS)
+					.build());
 		}
 		return new ResponseEntity().resultEnum(ResultEnum.A0001);
 	}
